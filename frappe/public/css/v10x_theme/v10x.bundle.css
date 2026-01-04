@@ -1,0 +1,172 @@
+/* V10x Theme Bundle (Modernize) */
+
+:root {
+    /* Modernize Palette */
+    --primary: #5D87FF; /* Signature Blue */
+    --primary-light: #ECF2FF;
+    --secondary: #49BEFF;
+    
+    /* Text & Background */
+    --text-color: #2A3547;
+    --text-muted: #5A6A85;
+    --bg-color: #F8F9FD;
+    --card-bg: #ffffff;
+    
+    /* Overrides for Frappe */
+    --navbar-height: 0px !important;
+    --page-head-height: 0px !important; 
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Inter', sans-serif; /* Modernize uses Plus Jakarta Sans usually, but Inter is fine */
+    color: var(--text-color);
+}
+
+/* 1. HIDE DEFAULT SHELL ELEMENTS */
+header.navbar {
+    display: none !important;
+}
+
+.page-head {
+    display: none !important;
+}
+
+.layout-side-section {
+    display: none !important; 
+}
+
+/* 2. CARD & WIDGET STYLING */
+.frappe-card, .form-section {
+    background: var(--card-bg);
+    border-radius: 12px; /* Modernize rounds */
+    border: none; /* Modernize is shadow based usually */
+    box-shadow: 0 6px 30px rgba(0,0,0,0.06); 
+    padding: 25px;
+    margin-bottom: 24px;
+}
+
+/* 3. INPUT STYLING (MODERNIZE STYLE) */
+.form-control {
+    background-color: #fff;
+    border: 1px solid #dfe5ef;
+    border-radius: 8px;
+    padding: 10px 16px;
+    height: auto;
+    font-size: 14px;
+    color: var(--text-color);
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    background-color: #fff;
+    border-color: var(--primary);
+    box-shadow: none; /* Modernize is often flat on focus */
+}
+
+.control-label {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+/* 4. BUTTON STYLING */
+.btn {
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-weight: 600;
+    text-transform: capitalize;
+    box-shadow: none;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background-color: #4570ea;
+}
+
+/* 5. MAIN CONTAINER ADJUSTMENT */
+.layout-main-section-wrapper {
+    margin-left: 270px; /* Sidebar width from Vue */
+    margin-top: 90px; /* Topbar height + spacing */
+    padding: 30px;
+    width: calc(100% - 270px);
+}
+
+@media (max-width: 991px) {
+    .layout-main-section-wrapper {
+        margin-left: 0;
+        width: 100%;
+        margin-top: 70px;
+    }
+}
+
+/* SUBMENU & EDIT STYLES */
+.sidebar-menu ul ul {
+    background-color: #f7f9fc;
+    padding: 0;
+}
+
+.sidebar-menu ul ul li a {
+    padding-left: 45px;
+    font-size: 13px;
+}
+
+.has-arrow {
+    position: relative;
+}
+
+.has-arrow:after {
+    content: "\f107"; /* FontAwesome Angle Down */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.2s;
+}
+
+.active > .has-arrow:after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.edit-mode .v10x-sidebar {
+    border-right: 2px dashed var(--primary);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.fa-cog {
+    color: #999;
+    transition: color 0.2s;
+}
+
+.fa-cog:hover {
+    color: var(--primary);
+}
+
+.sidebar-header {
+    padding: 10px;
+    background: #f0f0f0;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.sidebar-icon svg {
+    width: 16px;
+    height: 16px;
+    margin-right: 10px;
+}
+
+.sidebar-icon .icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 10px;
+}
