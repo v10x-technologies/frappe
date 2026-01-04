@@ -2,8 +2,11 @@
   <div class="v10x-layout">
     <V10xHeader 
         :sidebar_collapsed="sidebar_collapsed"
+        :sidebar_hidden="sidebar_hidden"
         :user_fullname="user_fullname"
         :user_initials="user_initials"
+        :app_name="app_name"
+        :app_logo="app_logo"
         @toggle-hide="toggleHide" 
     />
 
@@ -36,10 +39,20 @@ export default {
             user_initials: frappe.get_abbr(frappe.session.user_fullname || 'Administrator'),
             sidebar_collapsed: localStorage.getItem('v10x_sidebar_collapsed') === 'true',
             sidebar_hidden: localStorage.getItem('v10x_sidebar_hidden') === 'true',
-            current_route: frappe.get_route() ? frappe.get_route_str() : ""
+            current_route: frappe.get_route() ? frappe.get_route_str() : "",
+            app_name: 'V10xERP',
+            app_logo: '/assets/frappe/images/frappe-framework-logo.svg'
         }
     },
     mounted() {
+        // Fetch Website Settings for Branding
+        frappe.db.get_single_value('Website Settings', 'app_name').then(val => {
+             if (val) this.app_name = val;
+        });
+        frappe.db.get_single_value('Website Settings', 'app_logo').then(val => {
+             if (val) this.app_logo = val;
+        });
+
         // Load Material Design Icons (Runtime Injection to avoid Build Errors)
         if (!document.getElementById('mdi-font')) {
             let link = document.createElement('link');

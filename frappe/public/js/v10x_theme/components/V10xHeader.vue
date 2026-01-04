@@ -2,12 +2,12 @@
     <header class="v10x-header">
       <div class="header-left d-flex align-items-center">
         <a href="/app/home" class="logo me-3">
-          <img src="/assets/frappe/images/frappe-framework-logo.svg" alt="Logo" v-if="!sidebar_collapsed" style="max-height: 30px;">
-          <span class="logo-text ms-2" v-if="!sidebar_collapsed">Modernize</span>
-          <span class="logo-text-mini" v-else>M</span>
+          <img :src="app_logo" alt="Logo" v-if="!sidebar_collapsed" style="max-height: 30px;">
+          <span class="logo-text ms-2" v-if="!sidebar_collapsed">{{ app_name }}</span>
+          <span class="logo-text-mini" v-else>{{ logo_initial }}</span>
         </a>
-        <button class="btn-reset ms-2" @click="toggleHide" title="Hide Sidebar">
-            <i class="mdi mdi-fullscreen" style="font-size: 24px;"></i>
+        <button class="btn-reset ms-2" @click="toggleHide" :title="sidebar_hidden ? 'Show Sidebar' : 'Hide Sidebar'">
+            <i class="mdi" :class="sidebar_hidden ? 'mdi-menu' : 'mdi-close'" style="font-size: 24px;"></i>
         </button>
       </div>
       
@@ -43,7 +43,12 @@
 <script>
 export default {
     name: 'V10xHeader',
-    props: ['sidebar_collapsed', 'user_fullname', 'user_initials'],
+    props: ['sidebar_collapsed', 'sidebar_hidden', 'user_fullname', 'user_initials', 'app_name', 'app_logo'],
+    computed: {
+        logo_initial() {
+            return this.app_name ? this.app_name.charAt(0).toUpperCase() : 'M';
+        }
+    },
     methods: {
         toggleHide() {
             this.$emit('toggle-hide');
