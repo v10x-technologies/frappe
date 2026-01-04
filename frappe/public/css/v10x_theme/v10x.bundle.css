@@ -1,4 +1,4 @@
-/* V10x Theme Bundle (Modernize) */
+/* V10x Theme - Modernize Design System */
 
 :root {
     /* Modernize Palette */
@@ -92,13 +92,23 @@ header.navbar {
 
 /* 5. MAIN CONTAINER ADJUSTMENT */
 .layout-main-section-wrapper {
+    background: #fff;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease-in-out;
+    z-index: 1001; /* Ensure it's above other elements */
     margin-left: 270px; /* Sidebar width from Vue */
-    margin-top: 90px; /* Topbar height + spacing */
+    margin-top: 70px; /* Topbar height + spacing */
     padding: 30px;
     width: calc(100% - 270px);
 }
 
 @media (max-width: 991px) {
+    .v10x-sidebar {
+        left: -270px;
+    }
+    .v10x-sidebar.mobile-open {
+        left: 0;
+    }
     .layout-main-section-wrapper {
         margin-left: 0;
         width: 100%;
@@ -169,4 +179,69 @@ header.navbar {
     width: 16px;
     height: 16px;
     margin-right: 10px;
+}
+
+/* --- SIDEBAR COLLAPSED STATE MOVED TO VUE COMPONENT --- */
+
+/* Adjust Main Content when Collapsed */
+body.v10x-sidebar-collapsed .layout-main-section-wrapper {
+    margin-left: 5vw;
+    width: calc(100% - 5vw);
+}
+
+@media (max-width: 1200px) {
+    /* Fallback for smaller screens where 5% is too small */
+    body.v10x-sidebar-collapsed .layout-main-section-wrapper {
+        margin-left: 60px;
+        width: calc(100% - 60px);
+    }
+}
+
+/* --- SIDEBAR HIDDEN STATE --- */
+body.v10x-sidebar-hidden .v10x-sidebar {
+    transform: translateX(-100%);
+}
+
+body.v10x-sidebar-hidden .layout-main-section-wrapper {
+    margin-left: 0;
+    width: 100%;
+}
+
+/* Header Adjustments */
+.logo-area {
+    display: flex;
+    align-items: center;
+    min-width: 50px;
+}
+
+.logo-text-mini {
+    font-weight: 900;
+    font-size: 24px;
+    color: var(--primary);
+}
+
+/* Header Toggle Buttons */
+.btn-reset {
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: #2c3e50; /* Darker color for visibility */
+    margin-right: 8px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-reset:hover {
+    background-color: #f3f4f6;
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-reset i {
+    font-size: 20px;
+    line-height: 1;
 }
