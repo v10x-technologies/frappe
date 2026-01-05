@@ -14,9 +14,11 @@
       <div class="header-right">
         <!-- GLOBAL SEARCH -->
         <div class="top-nav-search">
-            <form>
-                <input type="text" class="form-control" placeholder="Search here">
-                <button class="btn" type="submit"><i class="mdi mdi-magnify"></i></button>
+            <form role="search" onsubmit="return false;">
+                <div class="search-input-wrapper">
+                    <i class="mdi mdi-magnify search-icon"></i>
+                    <input id="navbar-search" type="text" class="form-control" placeholder="Search here">
+                </div>
             </form>
         </div>
 
@@ -151,6 +153,24 @@ export default {
         format_time(creation) {
             return frappe.datetime.comment_when(creation);
         },
+        setup_search() {
+            if (typeof frappe !== 'undefined' && frappe.search && frappe.search.AwesomeBar) {
+                this.search_bar = new frappe.search.AwesomeBar();
+                this.search_bar.setup("#navbar-search");
+
+                // Tab key auto-select logic
+                const $input = $("#navbar-search");
+                $input.on("keydown", (e) => {
+                    if (e.key === "Tab") {
+                        const awesomplete = this.search_bar.awesomplete;
+                        if (awesomplete && awesomplete.opened && awesomplete.ul.children.length > 0) {
+                            e.preventDefault();
+                            awesomplete.select();
+                        }
+                    }
+                });
+            }
+        },
         setup_realtime() {
             frappe.realtime.on('notification', () => {
                 this.fetch_notifications();
@@ -163,6 +183,7 @@ export default {
     mounted() {
         this.fetch_notifications();
         this.setup_realtime();
+        this.setup_search();
     }
 }
 </script>
@@ -205,6 +226,64 @@ export default {
 
 .top-nav-search {
     margin-right: 20px;
+    position: relative;
+    max-width: 400px;
+    width: 100%;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-wrapper .search-icon {
+    position: absolute;
+    left: 15px;
+    color: var(--text-muted);
+    font-size: 20px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.top-nav-search .form-control {
+    padding-left: 45px;
+    width: 100%;
+}
+
+:deep(.awesomplete) {
+    width: 100%;
+    position: relative;
+}
+
+:deep(.awesomplete > ul) {
+    width: 100%;
+    min-width: 200px;
+    max-width: 300px;
+    top: 100%;
+    margin-top: 5px;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    border: 1px solid #dfe5ef;
+    background: #fff;
+    padding: 8px 0;
+    overflow-x: hidden;
+}
+
+:deep(.awesomplete li) {
+    padding: 8px 15px;
+    border-radius: 0;
+}
+
+:deep(.awesomplete li:hover),
+:deep(.awesomplete li[aria-selected="true"]) {
+    background-color: #f3f6f9;
+}
+
+:deep(.awesomplete mark) {
+    background: transparent;
+    color: var(--primary);
+    font-weight: 700;
 }
 
 .user-text h6 {
