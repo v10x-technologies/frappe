@@ -277,7 +277,7 @@ export default {
 <style scoped>
 .v10x-sidebar {
     background-color: #fff;
-    width: 270px;
+    width: 240px;
     position: fixed;
     top: 70px;
     bottom: 0;

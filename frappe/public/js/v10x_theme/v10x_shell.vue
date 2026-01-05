@@ -17,7 +17,20 @@
     />
 
     <!-- MAIN CONTENT WRAPPER -->
-    <!-- This is where Frappe will render its pages (workspace content) -->
+    <main class="v10x-main-content">
+        <!-- V10x Workspace View -->
+        <div v-if="is_workspace" class="v10x-workspace-view">
+            <V10xWorkspace 
+                :workspace_name="workspace_name" 
+                :is_public="is_workspace_public" 
+            />
+        </div>
+
+        <!-- Stable Portal for standard Frappe content -->
+        <div id="v10x-frappe-portal" v-show="!is_workspace">
+            <!-- Frappe #body will be moved here via bundle.js -->
+        </div>
+    </main>
   </div>
 </template>
 
@@ -26,12 +39,14 @@
 // Note: frappe build system might require extensions or specific paths
 import V10xHeader from './components/V10xHeader.vue';
 import V10xSidebar from './components/V10xSidebar.vue';
+import V10xWorkspace from './components/workspace/V10xWorkspace.vue';
 
 export default {
     name: 'V10xShell',
     components: {
         V10xHeader,
-        V10xSidebar
+        V10xSidebar,
+        V10xWorkspace
     },
     data() {
         return {
@@ -42,6 +57,24 @@ export default {
             current_route: frappe.get_route() ? frappe.get_route_str() : "",
             app_name: 'V10xERP',
             app_logo: '/assets/frappe/images/frappe-framework-logo.svg'
+        }
+    },
+    computed: {
+        is_workspace() {
+            const route = frappe.get_route();
+            if (!route) return false;
+            const base = route[0] ? route[0].toLowerCase() : "";
+            return base === "workspaces";
+        },
+        workspace_name() {
+            const route = frappe.get_route();
+            if (!this.is_workspace) return '';
+            if (route.length === 1) return frappe.boot.home_page || "Home";
+            return route[1] === 'private' ? route[2] : route[1];
+        },
+        is_workspace_public() {
+            const route = frappe.get_route();
+            return route && route[1] !== 'private';
         }
     },
     mounted() {
@@ -67,9 +100,25 @@ export default {
         // Listen to route changes
         frappe.router.on('change', () => {
             this.current_route = frappe.get_route_str();
+            this.handlePortalVisibility();
         });
+
+        this.handlePortalVisibility();
     },
     methods: {
+        handlePortalVisibility() {
+            console.log(`[V10x] is_workspace: ${this.is_workspace}, route:`, frappe.get_route());
+            // Standard pages use #body inside our portal.
+            // Workspace pages show V10xWorkspace and hide the portal.
+            if (this.is_workspace) {
+                // When on workspace, we might still need to hide original page-head if it exists
+                $('.layout-main-section-wrapper').hide();
+                $('.page-head').hide();
+            } else {
+                $('.layout-main-section-wrapper').show();
+                $('.page-head').show();
+            }
+        },
         toggleCollapse() {
             this.sidebar_collapsed = !this.sidebar_collapsed;
             localStorage.setItem('v10x_sidebar_collapsed', this.sidebar_collapsed);
@@ -103,5 +152,32 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    overflow: hidden;
+}
+
+.v10x-main-content {
+    margin-left: 240px;
+    margin-top: 70px;
+    flex: 1;
+    overflow-y: auto;
+    transition: margin-left 0.3s ease;
+    background-color: #f8fafc;
+}
+
+/* Centered container for 85% screen usage */
+.v10x-workspace-view, #v10x-frappe-portal {
+    max-width: 85%;
+    margin: 0 auto;
+    width: 100%;
+}
+
+body.v10x-sidebar-collapsed .v10x-main-content {
+    margin-left: 5vw;
+}
+
+@media (max-width: 991px) {
+    .v10x-main-content {
+        margin-left: 0;
+    }
 }
 </style>

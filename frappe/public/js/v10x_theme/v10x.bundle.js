@@ -12,18 +12,40 @@ $(document).on('app_ready', function() {
 function initV10xShell() {
     console.log("🚀 V10x Theme: Initializing Shell...");
 
-    // 2. Hide default Elements that Frappe rendered
+    // 1. Mark body as themed
     $('body').addClass('v10x-theme-enabled');
     
-    // Inject our root element for Vue
+    // 2. Inject our root element for Vue if missing
     if ($('#v10x-root').length === 0) {
         $('<div id="v10x-root"></div>').prependTo('body');
     }
 
     // 3. Mount Vue App
     const app = createApp(V10xShell);
-    app.mount('#v10x-root');
+    window.v10x_shell = app.mount('#v10x-root');
 
-    // 4. Force override specific Frappe UI behaviors
+    // 4. THE PORTAL: Move original Frappe #body into our shell
+    let attempts = 0;
+    const portalInterval = setInterval(() => {
+        const $frappeBody = $('#body');
+        const $portal = $('#v10x-frappe-portal');
+        
+        if ($frappeBody.length && $portal.length) {
+            console.log("📦 V10x Theme: Portaling Frappe #body...");
+            
+            // Move original header also if we want to replace it or just hide it
+            $('.main-section > header').appendTo($portal);
+            $frappeBody.appendTo($portal);
+            
+            // Hide the original wrapper completely
+            $('.main-section').hide();
+            
+            clearInterval(portalInterval);
+        }
+        
+        if (attempts++ > 20) clearInterval(portalInterval);
+    }, 100);
+
+    // 5. Force override specific Frappe UI behaviors
     $('body').attr('data-theme', 'v10x'); 
 }

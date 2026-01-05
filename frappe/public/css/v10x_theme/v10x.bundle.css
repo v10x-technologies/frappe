@@ -96,15 +96,14 @@ header.navbar {
     box-shadow: 2px 0 10px rgba(0,0,0,0.05);
     transition: all 0.3s ease-in-out;
     z-index: 1001; /* Ensure it's above other elements */
-    margin-left: 270px; /* Sidebar width from Vue */
-    margin-top: 70px; /* Topbar height + spacing */
+    margin-left: 0 !important; /* Managed by Vue Shell */
     padding: 30px;
-    width: calc(100% - 270px);
+    width: 100% !important; /* Managed by Vue Shell container */
 }
 
 @media (max-width: 991px) {
     .v10x-sidebar {
-        left: -270px;
+        left: -240px;
     }
     .v10x-sidebar.mobile-open {
         left: 0;
@@ -185,8 +184,8 @@ header.navbar {
 
 /* Adjust Main Content when Collapsed */
 body.v10x-sidebar-collapsed .layout-main-section-wrapper {
-    margin-left: 5vw;
-    width: calc(100% - 5vw);
+    margin-left: 0 !important;
+    width: 100% !important;
 }
 
 @media (max-width: 1200px) {
