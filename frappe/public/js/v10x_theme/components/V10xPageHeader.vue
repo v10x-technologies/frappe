@@ -78,11 +78,23 @@ export default {
     background: #fff;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 0;
-    z-index: 100;
+    z-index: 1010; /* Increased from 100 to be above sidebar (999) and main header (1000) */
     position: sticky;
     top: 70px; /* Sits below the main V10x header */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Added slight shadow to distinguish when sticky */
     transition: top 0.3s ease, opacity 0.3s ease;
+}
+
+/* Ensure dropdowns inside the header are always on top */
+:deep(.menu-btn-group), 
+:deep(.actions-btn-group),
+:deep(.dropdown) {
+    position: relative;
+    z-index: 1;
+}
+
+:deep(.dropdown-menu) {
+    z-index: 1050 !important; /* Ensure it stays above most elements */
 }
 
 /* FADE TRANSITION */
