@@ -15,7 +15,7 @@
         :sidebar_collapsed="sidebar_collapsed"
         :current_route="current_route"
         @toggle-collapse="toggleCollapse"
-        @workspace-selected="handleWorkspaceSelected"
+        @workspace-selected="onWorkspaceClick"
     />
 
     <!-- SECONDARY SIDEBAR -->
@@ -81,8 +81,10 @@ export default {
             app_logo: '/assets/frappe/images/frappe-framework-logo.svg',
             observer: null,
             is_portaling: false,
-            showSecondarySidebar: true, // Forced true
-            menuItems: []
+            showSecondarySidebar: false,
+            menuItems: [],
+            activeWorkspaceName: '',
+            workspaceCache: {}
         }
     },
     watch: {
@@ -156,40 +158,80 @@ export default {
     methods: {
         checkSecondarySidebarOnLoad() {
              if (this.is_workspace && this.workspace_name) {
-                 this.handleWorkspaceSelected(this.workspace_name);
+                 // Slugify active name to compare with route slug
+                 const activeSlug = this.activeWorkspaceName ? frappe.router.slug(this.activeWorkspaceName) : '';
+                 
+                 // Only load if they differ (User navigated via URL/History not Click)
+                 if (activeSlug !== this.workspace_name) {
+                     this.loadWorkspace(this.workspace_name);
+                 }
              } else {
-                 // FORCE SHOW for debugging as requested
-                 this.showSecondarySidebar = true;
+                 this.showSecondarySidebar = false;
                  this.menuItems = [];
+                 this.activeWorkspaceName = '';
              }
         },
-        handleWorkspaceSelected(name) {
-             console.log('[V10x] Fetching workspace:', name);
+        onWorkspaceClick(name) {
+             // Smart Toggle Logic (User Interaction)
+             if (this.activeWorkspaceName === name) {
+                 if (this.menuItems.length > 0) {
+                     this.showSecondarySidebar = !this.showSecondarySidebar;
+                 }
+             } else {
+                 // New Workspace
+                 this.loadWorkspace(name);
+             }
+        },
+        loadWorkspace(name) {
+             // 1. Cache Check
+             if (this.workspaceCache[name]) {
+                 this.activeWorkspaceName = name;
+                 this.processWorkspaceData(this.workspaceCache[name]);
+                 return;
+             }
+
              frappe.call({
                 method: 'frappe.client.get',
                 args: {
                     doctype: 'Workspace',
                     name: name
-                }
+                },
+                freeze: false
             }).then(r => {
-                console.log('[V10x] Workspace Data:', r.message);
                 if (r.message) {
-                     // Check for common field name variations. User verified field is 'custom_menu'.
-                     const menuData = r.message.custom_menu || r.message.menu || r.message.sidebar_secondary || [];
-                     console.log('[V10x] Menu Data:', menuData);
-                     
-                     if (menuData.length > 0) {
-                        this.menuItems = menuData;
-                     } else {
-                        this.menuItems = [];
-                     }
+                    // Normalize active name from response to ensure consistency
+                    const canonicalName = r.message.name;
+                    this.activeWorkspaceName = canonicalName;
+                    
+                    // Cache with both the requested key and canonical name
+                    this.workspaceCache[name] = r.message;
+                    if (name !== canonicalName) {
+                        this.workspaceCache[canonicalName] = r.message;
+                    }
+
+                    this.processWorkspaceData(r.message);
                 } else {
+                    this.showSecondarySidebar = false;
                     this.menuItems = [];
+                    // Even if failed, we update active name to prevent infinite retry loops
+                    this.activeWorkspaceName = name; 
                 }
             }).catch(err => {
-                console.error('[V10xShell] Error fetching workspace:', err);
+                console.error('[V10xShell] Error:', err);
+                this.showSecondarySidebar = false;
                 this.menuItems = [];
+                this.activeWorkspaceName = name; 
             });
+        },
+        processWorkspaceData(data) {
+             const menuData = data.custom_menu || data.menu || data.sidebar_secondary || [];
+             if (menuData.length > 0) {
+                this.menuItems = menuData;
+                this.showSecondarySidebar = true; // Auto-show on new workspace if items exist
+             } else {
+                this.menuItems = [];
+                this.showSecondarySidebar = false;
+             }
         },
         handlePortalVisibility() {
             if (this.is_workspace) {
@@ -199,25 +241,27 @@ export default {
                 $('.layout-main-section').show();
                 $('.page-head').hide(); 
             }
-            // MutationObserver handles the actual portaling now
         },
         setupMutationObserver() {
             const target = document.querySelector('#v10x-body-portal');
             if (!target) return;
 
+            // Debounce the observer callback to reduce lag
+            let timeout;
             this.observer = new MutationObserver((mutations) => {
-                // Throttle slightly if needed, but for now just run
-                this.portalPageActions();
+                if (timeout) clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    this.portalPageActions();
+                }, 100); // 100ms debounce
             });
 
             this.observer.observe(target, { 
                 childList: true, 
                 subtree: true,
                 attributes: true,
-                attributeFilter: ['style', 'class']
+                attributeFilter: ['style', 'class', 'hidden'] // Limit observed attributes
             });
             
-            // Initial run
             this.portalPageActions();
         },
         cleanupMutationObserver() {
@@ -230,63 +274,61 @@ export default {
             if (this.is_portaling) return;
             this.is_portaling = true;
 
-            try {
-                // 1. Get Portal containers
-                const $bcPortal = $('#v10x-breadcrumbs-portal');
-                const $titlePortal = $('#v10x-title-text-portal');
-                const $customPortal = $('#v10x-custom-actions-portal');
-                const $standardPortal = $('#v10x-standard-actions-portal');
+            // Use requestAnimationFrame for smoother UI updates
+            requestAnimationFrame(() => {
+                try {
+                    // ... existing portal logic ...
+                    const $bcPortal = $('#v10x-breadcrumbs-portal');
+                    const $titlePortal = $('#v10x-title-text-portal');
+                    const $customPortal = $('#v10x-custom-actions-portal');
+                    const $standardPortal = $('#v10x-standard-actions-portal');
 
-                if (!$titlePortal.length) return;
-
-                // 2. Identify ACTIVE source elements
-                const $bcSource = $('#navbar-breadcrumbs');
-                const $activePage = $('.page-container:visible');
-                
-                if (!$activePage.length) {
-                    $bcPortal.empty();
-                    $titlePortal.empty();
-                    $customPortal.empty();
-                    $standardPortal.empty();
-                    return;
-                }
-                
-
-                // IMPORTANT: Frappe's .page-head contains the original elements
-                const $sourceHeader = $activePage.find('.page-head');
-                const $titleArea = $sourceHeader.find('.title-area');
-                const $customActions = $sourceHeader.find('.custom-actions');
-                const $standardActions = $sourceHeader.find('.standard-actions');
-
-                // 3. Update Title Portal (Breadcrumbs + Title)
-                // If we found a NEW title area, we should move it.
-                // But don't empty if we already have the RIGHT element.
-                
-                const moveIfNew = ($portal, $source, name) => {
-                    if ($source.length) {
-                        if (!$source.closest($portal).length) {
-                            $portal.empty(); 
-                            $source.appendTo($portal).show();
-                            $source.removeClass('hide hidden-xs hidden-md');
-                        }
+                    if (!$titlePortal.length) {
+                        this.is_portaling = false;
+                        return;
                     }
-                };
 
-                moveIfNew($bcPortal, $bcSource, "Breadcrumbs");
-                moveIfNew($titlePortal, $titleArea, "Title");
-                moveIfNew($customPortal, $customActions, "Custom Actions");
-                moveIfNew($standardPortal, $standardActions, "Standard Actions");
+                    const $bcSource = $('#navbar-breadcrumbs');
+                    const $activePage = $('.page-container:visible');
+                    
+                    if (!$activePage.length) {
+                        $bcPortal.empty();
+                        $titlePortal.empty();
+                        $customPortal.empty();
+                        $standardPortal.empty();
+                        this.is_portaling = false;
+                        return;
+                    }
 
-                // Ensure visibility of internal buttons which Frappe often hides
-                $standardActions.find('.btn').removeClass('hide');
-                $customActions.find('.btn').removeClass('hide');
+                    const $sourceHeader = $activePage.find('.page-head');
+                    const $titleArea = $sourceHeader.find('.title-area');
+                    const $customActions = $sourceHeader.find('.custom-actions');
+                    const $standardActions = $sourceHeader.find('.standard-actions');
 
-            } finally {
-                // Delay resetting the flag slightly to catch any echo mutations
-                setTimeout(() => {
+                    const moveIfNew = ($portal, $source) => {
+                        if ($source.length) {
+                            if (!$source.closest($portal).length) {
+                                $portal.empty(); 
+                                $source.appendTo($portal).show();
+                                $source.removeClass('hide hidden-xs hidden-md');
+                            }
+                        }
+                    };
+
+                    moveIfNew($bcPortal, $bcSource);
+                    moveIfNew($titlePortal, $titleArea);
+                    moveIfNew($customPortal, $customActions);
+                    moveIfNew($standardPortal, $standardActions);
+
+                    $standardActions.find('.btn').removeClass('hide');
+                    $customActions.find('.btn').removeClass('hide');
+
+                } catch(e) { 
+                    // Silent fail
+                } finally {
                     this.is_portaling = false;
-                }, 50);
-            }
+                }
+            });
         },
         toggleCollapse() {
             this.sidebar_collapsed = !this.sidebar_collapsed;

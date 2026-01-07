@@ -89,7 +89,8 @@ export default {
     width: 250px;
     z-index: 1001; /* Ensure above content */
     pointer-events: none; /* Allow clicking through empty space if we had it, but here we just position the content */
-    display: block !important; /* Force display */
+    /* display: block !important; Removed forced display */
+    transition: left 0.2s ease-in-out; /* Sync with primary sidebar toggle */
 }
 
 /* Dynamic left position based on sidebar state - handled via prop or class in parent? 

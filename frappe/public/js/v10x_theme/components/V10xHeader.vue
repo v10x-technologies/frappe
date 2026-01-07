@@ -66,17 +66,7 @@
             </div>
         </div>
 
-        <!-- SECONDARY SIDEBAR TOGGLE -->
-        <div class="nav-item secondary-sidebar-toggle me-3">
-            <button 
-                class="btn-reset nav-link" 
-                @click="toggleSecondarySidebar"
-                title="Quick Links"
-                aria-label="Toggle Secondary Sidebar"
-            >
-                <i class="mdi mdi-menu"></i>
-            </button>
-        </div>
+
 
         <!-- DUPLICATE TAB BUTTON -->
         <div class="nav-item duplicate-tab-btn me-3">
