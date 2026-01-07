@@ -66,7 +66,9 @@ export default {
             sidebar_hidden: localStorage.getItem('v10x_sidebar_hidden') === 'true',
             current_route: frappe.get_route() ? frappe.get_route_str() : "",
             app_name: 'V10xERP',
-            app_logo: '/assets/frappe/images/frappe-framework-logo.svg'
+            app_logo: '/assets/frappe/images/frappe-framework-logo.svg',
+            observer: null,
+            is_portaling: false
         }
     },
     computed: {
@@ -119,11 +121,13 @@ export default {
         });
 
         this.handlePortalVisibility();
+        this.setupMutationObserver();
+    },
+    beforeUnmount() {
+        this.cleanupMutationObserver();
     },
     methods: {
         handlePortalVisibility() {
-            console.log(`[V10x] is_workspace: ${this.is_workspace}, route:`, frappe.get_route());
-            
             if (this.is_workspace) {
                 $('.layout-main-section').hide();
                 $('.page-head').hide();
@@ -131,52 +135,98 @@ export default {
                 $('.layout-main-section').show();
                 $('.page-head').hide(); 
             }
+            // MutationObserver handles the actual portaling now
+        },
+        setupMutationObserver() {
+            const target = document.querySelector('#v10x-body-portal');
+            if (!target) return;
 
-            // Always try to portal actions to unified header
-            this.$nextTick(() => {
-                setTimeout(() => this.portalPageActions(), 100);
+            this.observer = new MutationObserver((mutations) => {
+                // Throttle slightly if needed, but for now just run
+                this.portalPageActions();
             });
+
+            this.observer.observe(target, { 
+                childList: true, 
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class']
+            });
+            
+            // Initial run
+            this.portalPageActions();
+        },
+        cleanupMutationObserver() {
+            if (this.observer) {
+                this.observer.disconnect();
+                this.observer = null;
+            }
         },
         portalPageActions() {
-            // 1. Get Portal containers
-            const $titlePortal = $('#v10x-page-title-portal');
-            const $customPortal = $('#v10x-custom-actions-portal');
-            const $standardPortal = $('#v10x-standard-actions-portal');
-            const $morePortal = $('#v10x-more-actions-portal');
+            if (this.is_portaling) return;
+            this.is_portaling = true;
 
-            if (!$titlePortal.length) return;
+            try {
+                // 1. Get Portal containers
+                const $bcPortal = $('#v10x-breadcrumbs-portal');
+                const $titlePortal = $('#v10x-title-text-portal');
+                const $customPortal = $('#v10x-custom-actions-portal');
+                const $standardPortal = $('#v10x-standard-actions-portal');
+                const $morePortal = $('#v10x-more-actions-portal');
 
-            // CLEAR PORTALS
-            $titlePortal.empty();
-            $customPortal.empty();
-            $standardPortal.empty();
-            $morePortal.empty();
+                if (!$titlePortal.length) return;
 
-            // 2. Breadcrumbs
-            const $breadcrumbs = $('#navbar-breadcrumbs');
-            if ($breadcrumbs.length && $breadcrumbs.children().length > 0) {
-                $breadcrumbs.prependTo($titlePortal).show();
+                // 2. Identify ACTIVE source elements
+                const $bcSource = $('#navbar-breadcrumbs');
+                const $activePage = $('.page-container:visible');
+                
+                if (!$activePage.length) {
+                    $bcPortal.empty();
+                    $titlePortal.empty();
+                    $customPortal.empty();
+                    $standardPortal.empty();
+                    $morePortal.empty();
+                    return;
+                }
+                
+
+                // IMPORTANT: Frappe's .page-head contains the original elements
+                const $sourceHeader = $activePage.find('.page-head');
+                const $titleArea = $sourceHeader.find('.title-area');
+                const $customActions = $sourceHeader.find('.custom-actions');
+                const $standardActions = $sourceHeader.find('.standard-actions');
+                const $moreButton = $sourceHeader.find('.more-button');
+
+                // 3. Update Title Portal (Breadcrumbs + Title)
+                // If we found a NEW title area, we should move it.
+                // But don't empty if we already have the RIGHT element.
+                
+                const moveIfNew = ($portal, $source, name) => {
+                    if ($source.length) {
+                        if (!$source.closest($portal).length) {
+                            $portal.empty(); 
+                            $source.appendTo($portal).show();
+                            $source.removeClass('hide hidden-xs hidden-md');
+                        }
+                    }
+                };
+
+                moveIfNew($bcPortal, $bcSource, "Breadcrumbs");
+                moveIfNew($titlePortal, $titleArea, "Title");
+                moveIfNew($customPortal, $customActions, "Custom Actions");
+                moveIfNew($standardPortal, $standardActions, "Standard Actions");
+                moveIfNew($morePortal, $moreButton, "More Menu");
+
+                // Ensure visibility of internal buttons which Frappe often hides
+                $standardActions.find('.btn').removeClass('hide');
+                $customActions.find('.btn').removeClass('hide');
+
+            } finally {
+                // Delay resetting the flag slightly to catch any echo mutations
+                setTimeout(() => {
+                    this.is_portaling = false;
+                }, 50);
             }
-
-            // 3. Page Elements
-            const $activePage = $('.page-container:visible');
-            if (!$activePage.length) return;
-
-            const $titleArea = $activePage.find('.title-area');
-            const $customActions = $activePage.find('.custom-actions');
-            const $standardActions = $activePage.find('.standard-actions');
-            const $moreButton = $activePage.find('.more-button');
-
-            // Move to portals
-            if ($titleArea.length) $titleArea.appendTo($titlePortal).show();
-            if ($customActions.length) $customActions.appendTo($customPortal).show();
-            if ($standardActions.length) $standardActions.appendTo($standardPortal).show();
-            if ($moreButton.length) $moreButton.appendTo($morePortal).show();
-            
-            // Clean up clashing classes
-            $customActions.removeClass('hide hidden-xs hidden-md');
-            $standardActions.removeClass('hide');
-            $moreButton.removeClass('hide');
         },
         toggleCollapse() {
             this.sidebar_collapsed = !this.sidebar_collapsed;

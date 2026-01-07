@@ -186,6 +186,22 @@ header.navbar {
     font-size: 13px;
 }
 
+/* 8. FORCE VISIBILITY FOR PORTALED ELEMENTS */
+#v10x-breadcrumbs-portal #navbar-breadcrumbs,
+#v10x-title-text-portal .title-area,
+#v10x-standard-actions-portal .standard-actions,
+#v10x-custom-actions-portal .custom-actions,
+#v10x-more-actions-portal .more-button {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Hide original Frappe headers globally */
+.page-head:not(.v10x-page-header .page-head) {
+    display: none !important;
+}
+
 .has-arrow {
     position: relative;
 }

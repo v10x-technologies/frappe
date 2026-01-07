@@ -1,23 +1,23 @@
 <template>
-  <div class="v10x-page-header" v-show="show">
-    <div class="header-container d-flex align-items-center justify-content-between px-4 py-2">
-      <div class="page-title-area d-flex align-items-center">
-          <!-- Unified Portal for Breadcrumbs and Title -->
-          <div id="v10x-page-title-portal" class="d-flex align-items-center"></div>
-      </div>
-        
-        <div class="page-actions-area d-flex align-items-center gap-2">
-            <!-- Placeholder for teleported custom actions -->
-            <div id="v10x-custom-actions-portal" class="d-flex align-items-center gap-2"></div>
+  <transition name="fade">
+    <div class="v10x-page-header" v-show="show && hasContent">
+      <div class="header-container d-flex align-items-center justify-content-between px-4 py-2">
+        <div class="page-title-area d-flex flex-column align-items-start gap-1">
+            <!-- Dedicated Portal for Breadcrumbs (Top Line) -->
+            <div id="v10x-breadcrumbs-portal" class="d-flex align-items-center"></div>
             
-            <!-- Ellipsis / More Actions portal -->
-            <div id="v10x-more-actions-portal" class="d-flex align-items-center"></div>
-
-            <!-- Placeholder for teleported standard actions -->
-            <div id="v10x-standard-actions-portal" class="d-flex align-items-center gap-2"></div>
+            <!-- Dedicated Portal for Title (Bottom Line) -->
+            <div id="v10x-title-text-portal" class="d-flex align-items-center"></div>
+        </div>
+          
+          <div class="page-actions-area d-flex align-items-center gap-2">
+              <div id="v10x-custom-actions-portal" class="d-flex align-items-center gap-2"></div>
+              <div id="v10x-more-actions-portal" class="d-flex align-items-center"></div>
+              <div id="v10x-standard-actions-portal" class="d-flex align-items-center gap-2"></div>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
 </template>
 
 <script>
@@ -27,6 +27,47 @@ export default {
         show: {
             type: Boolean,
             default: true
+        }
+    },
+    data() {
+        return {
+            hasContent: false,
+            hasBreadcrumbs: false,
+            hasTitle: false,
+            observer: null
+        }
+    },
+    mounted() {
+        this.setupObserver();
+    },
+    beforeUnmount() {
+        if (this.observer) this.observer.disconnect();
+    },
+    methods: {
+        setupObserver() {
+            const checkContent = () => {
+                const bcPortal = document.getElementById('v10x-breadcrumbs-portal');
+                const titlePortal = document.getElementById('v10x-title-text-portal');
+                const standardPortal = document.getElementById('v10x-standard-actions-portal');
+                
+                this.hasBreadcrumbs = !!(bcPortal && bcPortal.children.length > 0);
+                this.hasTitle = !!(titlePortal && titlePortal.children.length > 0);
+                const hasActions = !!(standardPortal && standardPortal.children.length > 0);
+                
+                this.hasContent = this.hasBreadcrumbs || this.hasTitle || hasActions;
+            };
+
+            this.observer = new MutationObserver(checkContent);
+            const target = this.$el; 
+            // Wait, this.$el is the transition or the div.
+            // We need to observe the portals inside.
+            this.$nextTick(() => {
+                const container = document.querySelector('.v10x-page-header');
+                if (container) {
+                    this.observer.observe(container, { childList: true, subtree: true });
+                }
+                checkContent();
+            });
         }
     }
 };
@@ -41,10 +82,20 @@ export default {
     position: sticky;
     top: 70px; /* Sits below the main V10x header */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Added slight shadow to distinguish when sticky */
+    transition: top 0.3s ease, opacity 0.3s ease;
+}
+
+/* FADE TRANSITION */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 
 .header-container {
-    min-height: 50px;
+    min-height: 60px; /* Increased slightly to accommodate two lines */
+    padding: 10px 0;
 }
 
 #v10x-page-title-portal {
@@ -52,19 +103,29 @@ export default {
     gap: 12px;
 }
 
+.title-separator {
+    color: var(--text-muted);
+    opacity: 0.5;
+    font-size: 14px;
+    font-weight: 300;
+}
+
 /* Breadcrumb Styling */
 :deep(#navbar-breadcrumbs) {
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    gap: 8px;
-    align-items: center;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 4px !important;
+    align-items: center !important;
 }
 
 :deep(#navbar-breadcrumbs li) {
-    display: flex;
-    align-items: center;
+    display: flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
 }
 
 :deep(#navbar-breadcrumbs li::after) {
