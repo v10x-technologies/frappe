@@ -66,19 +66,67 @@
             </div>
         </div>
 
+        <!-- SECONDARY SIDEBAR TOGGLE -->
+        <div class="nav-item secondary-sidebar-toggle me-3">
+            <button 
+                class="btn-reset nav-link" 
+                @click="toggleSecondarySidebar"
+                title="Quick Links"
+                aria-label="Toggle Secondary Sidebar"
+            >
+                <i class="mdi mdi-menu"></i>
+            </button>
+        </div>
+
+        <!-- DUPLICATE TAB BUTTON -->
+        <div class="nav-item duplicate-tab-btn me-3">
+            <button 
+                class="btn-reset nav-link" 
+                @click="duplicateTab"
+                title="Open in New Tab"
+                aria-label="Duplicate Tab"
+            >
+                <i class="mdi mdi-content-copy"></i>
+            </button>
+        </div>
+
         <ul class="nav user-menu">
-            <li class="nav-item">
-                <span class="user-img">
-                    <div class="avatar avatar-sm">
-                        <span class="avatar-title rounded-circle bg-primary-light text-primary">
-                            {{ user_initials }}
-                        </span>
+            <li class="nav-item dropdown dropdown-navbar-user">
+                <button 
+                    class="btn-reset nav-link user-menu-toggle"
+                    data-toggle="dropdown"
+                    data-bs-toggle="dropdown"
+                    aria-label="User Menu"
+                    aria-expanded="false"
+                >
+                    <div class="user-img d-flex align-items-center gap-2">
+                        <div class="avatar avatar-sm">
+                            <span class="avatar-title rounded-circle bg-primary-light text-primary">
+                                {{ user_initials }}
+                            </span>
+                        </div>
+                        <div class="user-text d-none d-lg-block">
+                            <h6 class="mb-0">{{ user_fullname }}</h6>
+                            <p class="text-muted mb-0" style="font-size: 10px;">{{ user_role }}</p>
+                        </div>
                     </div>
-                    <div class="user-text">
-                        <h6>{{ user_fullname }}</h6>
-                        <p class="text-muted mb-0">Administrator</p>
-                    </div>
-                </span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right user-dropdown" role="menu">
+                    <template v-for="(item, index) in user_menu_items" :key="index">
+                        <div v-if="item.item_type === 'Separator'" class="dropdown-divider"></div>
+                        <a v-else-if="item.route" 
+                           class="dropdown-item" 
+                           :href="item.route"
+                           @click="handleMenuClick(item, $event)">
+                            {{ item.item_label }}
+                        </a>
+                        <button v-else-if="item.action" 
+                                class="btn-reset dropdown-item" 
+                                @click="executeAction(item.action)">
+                            {{ item.item_label }}
+                        </button>
+                    </template>
+                </div>
             </li>
         </ul>
       </div>
@@ -92,7 +140,9 @@ export default {
     data() {
         return {
             notifications: [],
-            unread_count: 0
+            unread_count: 0,
+            user_menu_items: [],
+            user_role: 'User'
         };
     },
     computed: {
@@ -103,6 +153,54 @@ export default {
     methods: {
         toggleHide() {
             this.$emit('toggle-hide');
+        },
+        duplicateTab() {
+            // Get the current URL with hash
+            const currentUrl = window.location.href;
+            // Open in new tab
+            window.open(currentUrl, '_blank');
+        },
+        toggleSecondarySidebar() {
+            this.$emit('toggle-secondary-sidebar');
+        },
+        load_user_menu() {
+            // Access Frappe's boot data
+            if (frappe.boot && frappe.boot.navbar_settings) {
+                this.user_menu_items = frappe.boot.navbar_settings.settings_dropdown || [];
+            }
+        },
+        load_user_role() {
+            // Get primary role or default
+            if (frappe.boot && frappe.boot.user && frappe.boot.user.roles) {
+                const roles = frappe.boot.user.roles;
+                // Prioritize System Manager, then first non-Guest role
+                if (roles.includes('System Manager')) {
+                    this.user_role = 'System Manager';
+                } else {
+                    this.user_role = roles.find(r => r !== 'Guest' && r !== 'All') || 'User';
+                }
+            }
+        },
+        handleMenuClick(item, event) {
+            // For internal routes, use Frappe router
+            if (item.route && item.route.startsWith('/app')) {
+                event.preventDefault();
+                const route = item.route.replace('/app/', '');
+                frappe.set_route(route);
+            }
+            // External routes will navigate normally
+        },
+        executeAction(action) {
+            try {
+                // Safely evaluate the action string
+                eval(action);
+            } catch (e) {
+                console.error('Error executing menu action:', e);
+                frappe.show_alert({
+                    message: __('Could not execute action'),
+                    indicator: 'red'
+                });
+            }
         },
         fetch_notifications() {
             frappe.call('frappe.desk.doctype.notification_log.notification_log.get_notification_logs', {
@@ -181,6 +279,8 @@ export default {
         }
     },
     mounted() {
+        this.load_user_menu();
+        this.load_user_role();
         this.fetch_notifications();
         this.setup_realtime();
         this.setup_search();
@@ -463,5 +563,105 @@ export default {
     color: #333;
     font-size: 13px;
     text-decoration: none;
+}
+
+/* SECONDARY SIDEBAR TOGGLE */
+.secondary-sidebar-toggle .nav-link {
+    color: #333;
+    padding: 8px 12px;
+    font-size: 20px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.secondary-sidebar-toggle .nav-link:hover {
+    background-color: #f9f9f9;
+    color: var(--primary);
+}
+
+/* DUPLICATE TAB BUTTON */
+.duplicate-tab-btn .nav-link {
+    color: #333;
+    padding: 8px 12px;
+    font-size: 20px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.duplicate-tab-btn .nav-link:hover {
+    background-color: #f9f9f9;
+    color: var(--primary);
+}
+
+/* USER MENU DROPDOWN STYLES */
+.user-menu-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.user-menu-toggle:hover {
+    background-color: #f9f9f9;
+}
+
+.user-menu .user-img {
+    display: contents;
+}
+
+.user-menu .avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-menu .user-text h6 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--heading-color);
+    margin: 0;
+}
+
+.user-dropdown {
+    min-width: 160px;
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    padding: 8px;
+    margin-top: 12px;
+    border: 1px solid var(--border-color);
+    z-index: 3001;
+    position: absolute;
+    right: 0;
+    top: 100%;
+}
+
+.user-dropdown .dropdown-item {
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-color);
+    transition: all 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: none;
+}
+
+.user-dropdown .dropdown-item:hover {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.user-dropdown .dropdown-divider {
+    margin: 6px 0;
+    border-color: var(--border-color);
 }
 </style>

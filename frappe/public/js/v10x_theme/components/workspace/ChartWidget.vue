@@ -18,23 +18,54 @@ export default {
             required: true
         }
     },
+    data() {
+        return {
+            resizeObserver: null,
+            chartInitialized: false
+        }
+    },
     mounted() {
-        this.render_chart();
+        this.setupResizeObserver();
     },
     methods: {
+        setupResizeObserver() {
+            if (!this.$refs.chart_container) return;
+
+            this.resizeObserver = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    if (entry.contentRect.width > 0 && !this.chartInitialized) {
+                        this.render_chart();
+                    }
+                }
+            });
+            
+            this.resizeObserver.observe(this.$refs.chart_container);
+        },
         render_chart() {
             if (!this.chart_data || !this.chart_data.chart_name) return;
+            if (this.chartInitialized) return;
             
+            const width = this.$refs.chart_container.getBoundingClientRect().width;
+            if (width <= 0) return;
+
             console.log(`[V10x] Chart: Rendering ${this.chart_data.chart_name}`);
             
-            // Integrate with Frappe's DashboardChart
-            this.chart = new frappe.ui.DashboardChart({
-                parent: this.$refs.chart_container,
-                chart_name: this.chart_data.chart_name,
-            });
+            try {
+                // Integrate with Frappe's DashboardChart
+                this.chart = new frappe.ui.DashboardChart({
+                    parent: this.$refs.chart_container,
+                    chart_name: this.chart_data.chart_name,
+                });
+                this.chartInitialized = true;
+            } catch (e) {
+                console.error(`[V10x] Chart: Error rendering ${this.chart_data.chart_name}`, e);
+            }
         }
     },
     beforeUnmount() {
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+        }
         if (this.chart && this.chart.destroy) {
             this.chart.destroy();
         }

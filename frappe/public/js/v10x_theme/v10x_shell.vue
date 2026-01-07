@@ -7,13 +7,23 @@
         :user_initials="user_initials"
         :app_name="app_name"
         :app_logo="app_logo"
-        @toggle-hide="toggleHide" 
+        @toggle-hide="toggleHide"
+        @toggle-secondary-sidebar="showSecondarySidebar = !showSecondarySidebar" 
     />
 
     <V10xSidebar 
         :sidebar_collapsed="sidebar_collapsed"
         :current_route="current_route"
         @toggle-collapse="toggleCollapse"
+        @workspace-selected="handleWorkspaceSelected"
+    />
+
+    <!-- SECONDARY SIDEBAR -->
+    <V10xSecondarySidebar 
+        :isOpen="showSecondarySidebar"
+        :workspaceName="workspace_name"
+        :menuItems="menuItems"
+        @close="showSecondarySidebar = false"
     />
 
     <!-- MAIN CONTENT WRAPPER -->
@@ -49,6 +59,7 @@ import V10xHeader from './components/V10xHeader.vue';
 import V10xSidebar from './components/V10xSidebar.vue';
 import V10xWorkspace from './components/workspace/V10xWorkspace.vue';
 import V10xPageHeader from './components/V10xPageHeader.vue';
+import V10xSecondarySidebar from './components/V10xSecondarySidebar.vue';
 
 export default {
     name: 'V10xShell',
@@ -56,7 +67,8 @@ export default {
         V10xHeader,
         V10xSidebar,
         V10xWorkspace,
-        V10xPageHeader
+        V10xPageHeader,
+        V10xSecondarySidebar
     },
     data() {
         return {
@@ -68,7 +80,14 @@ export default {
             app_name: 'V10xERP',
             app_logo: '/assets/frappe/images/frappe-framework-logo.svg',
             observer: null,
-            is_portaling: false
+            is_portaling: false,
+            showSecondarySidebar: true, // Forced true
+            menuItems: []
+        }
+    },
+    watch: {
+        showSecondarySidebar() {
+            this.applyLayoutState();
         }
     },
     computed: {
@@ -104,13 +123,18 @@ export default {
         });
 
         // Load Material Design Icons (Runtime Injection to avoid Build Errors)
-        if (!document.getElementById('mdi-font')) {
-            let link = document.createElement('link');
-            link.id = 'mdi-font';
-            link.rel = 'stylesheet';
-            link.href = 'https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css';
-            document.head.appendChild(link);
-        }
+        const loadCSS = (id, href) => {
+            if (!document.getElementById(id)) {
+                let link = document.createElement('link');
+                link.id = id;
+                link.rel = 'stylesheet';
+                link.href = href;
+                document.head.appendChild(link);
+            }
+        };
+
+        loadCSS('mdi-font', 'https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css');
+        loadCSS('material-icons', 'https://fonts.googleapis.com/icon?family=Material+Icons');
 
         this.applyLayoutState();
         
@@ -118,15 +142,55 @@ export default {
         frappe.router.on('change', () => {
             this.current_route = frappe.get_route_str();
             this.handlePortalVisibility();
+            // On direct page load, check if we need to show secondary sidebar
+            this.checkSecondarySidebarOnLoad();
         });
 
         this.handlePortalVisibility();
         this.setupMutationObserver();
+        this.checkSecondarySidebarOnLoad();
     },
     beforeUnmount() {
         this.cleanupMutationObserver();
     },
     methods: {
+        checkSecondarySidebarOnLoad() {
+             if (this.is_workspace && this.workspace_name) {
+                 this.handleWorkspaceSelected(this.workspace_name);
+             } else {
+                 // FORCE SHOW for debugging as requested
+                 this.showSecondarySidebar = true;
+                 this.menuItems = [];
+             }
+        },
+        handleWorkspaceSelected(name) {
+             console.log('[V10x] Fetching workspace:', name);
+             frappe.call({
+                method: 'frappe.client.get',
+                args: {
+                    doctype: 'Workspace',
+                    name: name
+                }
+            }).then(r => {
+                console.log('[V10x] Workspace Data:', r.message);
+                if (r.message) {
+                     // Check for common field name variations. User verified field is 'custom_menu'.
+                     const menuData = r.message.custom_menu || r.message.menu || r.message.sidebar_secondary || [];
+                     console.log('[V10x] Menu Data:', menuData);
+                     
+                     if (menuData.length > 0) {
+                        this.menuItems = menuData;
+                     } else {
+                        this.menuItems = [];
+                     }
+                } else {
+                    this.menuItems = [];
+                }
+            }).catch(err => {
+                console.error('[V10xShell] Error fetching workspace:', err);
+                this.menuItems = [];
+            });
+        },
         handlePortalVisibility() {
             if (this.is_workspace) {
                 $('.layout-main-section').hide();
@@ -246,6 +310,12 @@ export default {
             } else {
                 $('body').removeClass('v10x-sidebar-collapsed');
             }
+            
+            if (this.showSecondarySidebar) {
+                $('body').addClass('v10x-secondary-sidebar-open');
+            } else {
+                $('body').removeClass('v10x-secondary-sidebar-open');
+            }
         }
     }
 }
@@ -269,6 +339,14 @@ export default {
     position: relative;
     display: flex;
     flex-direction: column;
+}
+
+body.v10x-secondary-sidebar-open .v10x-main-content {
+    margin-left: 490px; /* 240px + 250px */
+}
+
+body.v10x-sidebar-collapsed.v10x-secondary-sidebar-open .v10x-main-content {
+    margin-left: 310px; /* 60px + 250px */
 }
 
 #v10x-frappe-portal {

@@ -20,7 +20,7 @@
                 <!-- Group/Parent Item -->
                 <li class="submenu" :class="{ active: is_active(item) }">
                     <a href="#" @click.prevent="navigate(item)" :class="{ 'has-arrow': item.children && item.children.length }">
-                        <span class="sidebar-icon" v-html="get_icon(item.icon)"></span>
+                        <span class="sidebar-icon" v-html="get_item_icon(item)"></span>
                         <span>{{ item.label }}</span>
                         <span class="menu-arrow" v-if="item.children && item.children.length"></span>
                         
@@ -46,7 +46,7 @@
              <li class="menu-title"><span>Private</span></li>
               <li v-for="item in private_items" :key="item.name" :class="{ active: is_active(item) }">
                 <a href="#" @click.prevent="navigate(item)">
-                    <span class="sidebar-icon" v-html="get_icon(item.icon)"></span>
+                    <span class="sidebar-icon" v-html="get_item_icon(item)"></span>
                     <span>{{ item.label }}</span>
                     <i v-if="is_edit_mode" class="fas fa-pencil-alt text-muted ms-2" @click.stop="edit_workspace(item)"></i>
                 </a>
@@ -91,9 +91,40 @@ export default {
     },
     methods: {
         async fetchWorkspaces() {
-            let response = await frappe.xcall("frappe.desk.desktop.get_workspace_sidebar_items");
-            if (!response || !response.pages) return;
-            this.process_sidebar_items(response.pages);
+            try {
+                let [response, custom_data] = await Promise.all([
+                     frappe.xcall("frappe.desk.desktop.get_workspace_sidebar_items"),
+                     frappe.db.get_list('Workspace', {
+                         fields: ['name', 'custom_icons', 'custom_dashboard'],
+                         limit: 0
+                     })
+                ]);
+                
+                if (!response || !response.pages) return;
+                
+                // Merge custom data
+                if (custom_data) {
+                    let custom_map = {};
+                    custom_data.forEach(d => custom_map[d.name] = d);
+                    
+                    const merge_custom = (pages) => {
+                        pages.forEach(p => {
+                            if (custom_map[p.name]) {
+                                p.custom_icons = custom_map[p.name].custom_icons;
+                                p.custom_dashboard = custom_map[p.name].custom_dashboard;
+                            }
+                            if (p.children && p.children.length) {
+                                merge_custom(p.children); // Recursively merge for children if deeper nesting existed
+                            }
+                        });
+                    };
+                    merge_custom(response.pages);
+                }
+
+                this.process_sidebar_items(response.pages);
+            } catch (e) {
+                console.error("Error fetching sidebar items", e);
+            }
         },
         process_sidebar_items(pages) {
             let public_roots = [];
@@ -124,8 +155,32 @@ export default {
              // In collapsed mode, clicks only navigate
             if (!this.sidebar_collapsed && item.children && item.children.length > 0) return;
 
+            // Emit event for parent to handle secondary sidebar logic
+            this.$emit('workspace-selected', item.name);
+            
+            if (item.custom_dashboard) {
+                 // Check if it's an absolute URL
+                 if (item.custom_dashboard.startsWith('http')) {
+                     window.open(item.custom_dashboard, '_blank');
+                 } else {
+                     window.open(item.custom_dashboard, '_self');
+                 }
+                 return;
+            }
+
             let route = item.public ? item.name : `private/${item.name}`;
             frappe.set_route(frappe.router.slug(route));
+        },
+        get_item_icon(item) {
+             if (item.custom_icons) {
+                 // Check if it's a class or icon code
+                 if (item.custom_icons.includes(' ') || item.custom_icons.startsWith('mdi') || item.custom_icons.startsWith('fa')) {
+                      return `<i class="${item.custom_icons}"></i>`;
+                 }
+                 // Assume Google Material Icons ligature/text
+                 return `<span class="material-icons">${item.custom_icons}</span>`;
+             }
+             return this.get_icon(item.icon);
         },
         get_icon(icon) {
             if (icon && (icon.includes(" ") || icon.startsWith("fa-") || icon.startsWith("fas") || icon.startsWith("far") || icon.startsWith("lni") || icon.startsWith("mdi"))) {
