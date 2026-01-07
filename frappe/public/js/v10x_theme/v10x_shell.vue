@@ -24,16 +24,18 @@
             <V10xPageHeader :show="true" />
             
             <div class="v10x-content-area">
-                <!-- V10x Workspace View -->
-                <div v-if="is_workspace" class="v10x-workspace-view">
-                    <V10xWorkspace 
-                        :workspace_name="workspace_name" 
-                        :is_public="is_workspace_public" 
-                    />
-                </div>
+                <div class="v10x-content-inner">
+                    <!-- V10x Workspace View -->
+                    <div v-if="is_workspace" class="v10x-workspace-view">
+                        <V10xWorkspace 
+                            :workspace_name="workspace_name" 
+                            :is_public="is_workspace_public" 
+                        />
+                    </div>
 
-                <!-- Frappe #body will be moved here via bundle.js -->
-                <div id="v10x-body-portal"></div>
+                    <!-- Frappe #body will be moved here via bundle.js -->
+                    <div id="v10x-body-portal"></div>
+                </div>
             </div>
         </div>
     </main>
@@ -208,15 +210,13 @@ export default {
 .v10x-layout {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
 }
 
 .v10x-main-content {
     margin-left: 240px;
     margin-top: 70px; /* Matches fixed header height */
     flex: 1;
-    overflow-y: auto;
     transition: margin-left 0.2s ease-in-out;
     background-color: var(--bg-color); /* Metronic gray background for content */
     z-index: 1;
@@ -232,8 +232,13 @@ export default {
 }
 
 .v10x-content-area {
-    padding: 25px;
     flex: 1;
+    position: relative;
+}
+
+.v10x-content-inner {
+    padding: 25px;
+    width: 100%;
 }
 
 body.v10x-sidebar-collapsed .v10x-main-content {

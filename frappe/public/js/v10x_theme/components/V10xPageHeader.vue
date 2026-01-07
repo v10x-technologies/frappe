@@ -39,7 +39,8 @@ export default {
     margin-bottom: 0;
     z-index: 100;
     position: sticky;
-    top: 0;
+    top: 70px; /* Sits below the main V10x header */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Added slight shadow to distinguish when sticky */
 }
 
 .header-container {
