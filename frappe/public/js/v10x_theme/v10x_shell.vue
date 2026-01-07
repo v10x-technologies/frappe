@@ -111,11 +111,11 @@ export default {
             // Standard pages use #body inside our portal.
             // Workspace pages show V10xWorkspace and hide the portal.
             if (this.is_workspace) {
-                // When on workspace, we might still need to hide original page-head if it exists
-                $('.layout-main-section-wrapper').hide();
+                // When on workspace, we might still need to hide original page elements
+                $('.layout-main-section').hide();
                 $('.page-head').hide();
             } else {
-                $('.layout-main-section-wrapper').show();
+                $('.layout-main-section').show();
                 $('.page-head').show();
             }
         },
@@ -161,12 +161,14 @@ export default {
     flex: 1;
     overflow-y: auto;
     transition: margin-left 0.3s ease;
-    background-color: #f8fafc;
+    background-color: #ffffff;
+    z-index: 1;
+    position: relative;
 }
 
-/* Centered container for 85% screen usage */
+/* Centered container for 100% screen usage */
 .v10x-workspace-view, #v10x-frappe-portal {
-    max-width: 85%;
+    max-width: 100%;
     margin: 0 auto;
     width: 100%;
 }
@@ -175,9 +177,32 @@ body.v10x-sidebar-collapsed .v10x-main-content {
     margin-left: 5vw;
 }
 
+body.v10x-sidebar-hidden .v10x-main-content {
+    margin-left: 0;
+}
+
 @media (max-width: 991px) {
     .v10x-main-content {
         margin-left: 0;
     }
+}
+
+/* Ensure layout-main-section behaves within our flex shell */
+:deep(.layout-main-section) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}
+
+/* Force Bootstrap containers to cover 100% width */
+:deep(.container), 
+:deep(.container-xl), 
+:deep(.container-lg), 
+:deep(.container-md), 
+:deep(.container-sm) {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 </style>

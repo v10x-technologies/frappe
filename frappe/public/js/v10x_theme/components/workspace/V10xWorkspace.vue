@@ -127,7 +127,7 @@ export default {
 
 .workspace-scroll-area {
     height: 100%;
-    overflow-y: auto;
+    overflow-y: visible;
     overflow-x: hidden;
 }
 

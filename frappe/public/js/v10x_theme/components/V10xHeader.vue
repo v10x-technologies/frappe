@@ -197,7 +197,7 @@ export default {
     top: 0;
     right: 0;
     left: 0;
-    z-index: 1001;
+    z-index: 3000;
     display: flex;
     align-items: center;
     padding: 0 25px;
@@ -268,6 +268,7 @@ export default {
     background: #fff;
     padding: 8px 0;
     overflow-x: hidden;
+    z-index: 3001;
 }
 
 :deep(.awesomplete li) {
@@ -324,6 +325,7 @@ export default {
     padding: 0;
     border: 0;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    z-index: 3001;
 }
 
 .topnav-dropdown-header {
