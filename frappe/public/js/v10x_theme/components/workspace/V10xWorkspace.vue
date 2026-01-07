@@ -1,7 +1,7 @@
 <template>
   <div class="v10x-workspace-container" v-if="page_data">
     <div class="workspace-scroll-area">
-      <div class="workspace-header mb-4 px-4 pt-4">
+      <div class="workspace-header mb-4 px-4 pt-4 d-none">
         <h2 class="workspace-title">{{ page_title }}</h2>
       </div>
 

@@ -28,13 +28,11 @@ function initV10xShell() {
     let attempts = 0;
     const portalInterval = setInterval(() => {
         const $frappeBody = $('#body');
-        const $portal = $('#v10x-frappe-portal');
+        const $portal = $('#v10x-body-portal');
         
         if ($frappeBody.length && $portal.length) {
             console.log("📦 V10x Theme: Portaling Frappe #body...");
             
-            // Move original header also if we want to replace it or just hide it
-            $('.main-section > header').appendTo($portal);
             $frappeBody.appendTo($portal);
             
             // Hide the original wrapper completely

@@ -276,14 +276,14 @@ export default {
 
 <style scoped>
 .v10x-sidebar {
-    background-color: #fff;
+    background-color: var(--bg-color); /* Metronic light gray background */
     width: 240px;
     position: fixed;
-    top: 70px;
+    top: 0; /* Sidebar spans full height in most modern designs */
     bottom: 0;
     left: 0;
     z-index: 1001; 
-    border-right: 1px solid #ebf1f6;
+    border-right: 1px solid var(--border-color);
     transition: all 0.2s ease-in-out;
     display: flex;
     flex-direction: column;
@@ -296,45 +296,61 @@ export default {
 }
 
 .sidebar-footer {
-    padding: 10px;
-    border-top: 1px solid #ebf1f6;
-    background: #fff;
+    padding: 15px;
+    border-top: 1px solid var(--border-color);
+    background: transparent;
     display: flex;
     justify-content: center;
 }
 
 .sidebar-menu ul {
     list-style: none;
-    padding: 10px;
+    padding: 12px;
     margin: 0;
+}
+
+.menu-title {
+    padding: 15px 14px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
 }
 
 .sidebar-menu li a {
     display: flex;
     align-items: center;
-    padding: 12px 14px;
-    color: #2a3547;
-    font-size: 14px;
+    padding: 10px 14px;
+    color: var(--text-color);
+    font-size: 13px;
+    font-weight: 500;
     text-decoration: none;
     transition: all 0.2s;
-    border-radius: 8px;
+    border-radius: 6px;
     margin-bottom: 2px;
 }
 
-.sidebar-menu li.active a, .sidebar-menu li a:hover {
-    color: #5D87FF;
-    background-color: #ecf2ff;
+.sidebar-menu li a:hover {
+    color: var(--primary);
+    background-color: var(--primary-light);
+}
+
+.sidebar-menu li.active > a {
+    color: var(--primary);
+    background-color: var(--primary-light);
+    font-weight: 600;
 }
 
 .sidebar-menu li i {
     margin-right: 12px;
-    font-size: 10px; 
+    font-size: 16px; 
     width: 20px;
     text-align: center;
 }
 
 .edit-mode .v10x-sidebar {
-    border-right: 2px dashed #5D87FF;
+    border-right: 2px dashed var(--primary);
 }
 
 .cursor-pointer {
@@ -342,36 +358,35 @@ export default {
 }
 
 .fa-cog {
-    color: #999;
+    color: var(--text-muted);
     transition: color 0.2s;
 }
 
 .fa-cog:hover {
-    color: #5D87FF;
+    color: var(--primary);
 }
 
-.sidebar-header {
-    padding: 10px;
-    background: #f0f0f0;
-    border-bottom: 1px solid #e5e5e5;
-}
-
-.sidebar-icon svg {
-    width: 16px;
-    height: 16px;
+.sidebar-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-right: 10px;
 }
 
-.sidebar-icon .icon {
-    width: 16px;
-    height: 16px;
-    margin-right: 10px;
+:deep(.sidebar-icon svg) {
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+}
+
+.sidebar-menu li.active :deep(.sidebar-icon svg) {
+    color: var(--primary);
 }
 
 /* Collapsed Logic */
 .v10x-sidebar.collapsed {
-    width: 5vw !important;
-    min-width: 50px;
+    width: 60px !important;
+    min-width: 60px;
 }
 
 .v10x-sidebar.collapsed .sidebar-menu .menu-title,
@@ -382,11 +397,10 @@ export default {
 
 .v10x-sidebar.collapsed .sidebar-menu li a {
     justify-content: center;
-    padding: 15px 0;
+    padding: 12px 0;
 }
 
 .v10x-sidebar.collapsed .sidebar-icon {
     margin-right: 0;
-    font-size: 24px;
 }
 </style>

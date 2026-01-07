@@ -19,16 +19,22 @@
     <!-- MAIN CONTENT WRAPPER -->
     <main class="v10x-main-content">
         <!-- V10x Workspace View -->
-        <div v-if="is_workspace" class="v10x-workspace-view">
-            <V10xWorkspace 
-                :workspace_name="workspace_name" 
-                :is_public="is_workspace_public" 
-            />
-        </div>
+        <!-- Main content area -->
+        <div id="v10x-frappe-portal">
+            <V10xPageHeader :show="true" />
+            
+            <div class="v10x-content-area">
+                <!-- V10x Workspace View -->
+                <div v-if="is_workspace" class="v10x-workspace-view">
+                    <V10xWorkspace 
+                        :workspace_name="workspace_name" 
+                        :is_public="is_workspace_public" 
+                    />
+                </div>
 
-        <!-- Stable Portal for standard Frappe content -->
-        <div id="v10x-frappe-portal" v-show="!is_workspace">
-            <!-- Frappe #body will be moved here via bundle.js -->
+                <!-- Frappe #body will be moved here via bundle.js -->
+                <div id="v10x-body-portal"></div>
+            </div>
         </div>
     </main>
   </div>
@@ -40,13 +46,15 @@
 import V10xHeader from './components/V10xHeader.vue';
 import V10xSidebar from './components/V10xSidebar.vue';
 import V10xWorkspace from './components/workspace/V10xWorkspace.vue';
+import V10xPageHeader from './components/V10xPageHeader.vue';
 
 export default {
     name: 'V10xShell',
     components: {
         V10xHeader,
         V10xSidebar,
-        V10xWorkspace
+        V10xWorkspace,
+        V10xPageHeader
     },
     data() {
         return {
@@ -69,6 +77,11 @@ export default {
         workspace_name() {
             const route = frappe.get_route();
             if (!this.is_workspace) return '';
+            
+            // Try to get title from current page if portal already happened
+            const $title = $('#v10x-page-title-portal .title-text');
+            if ($title.length && $title.text()) return $title.text();
+
             if (route.length === 1) return frappe.boot.home_page || "Home";
             return route[1] === 'private' ? route[2] : route[1];
         },
@@ -108,16 +121,60 @@ export default {
     methods: {
         handlePortalVisibility() {
             console.log(`[V10x] is_workspace: ${this.is_workspace}, route:`, frappe.get_route());
-            // Standard pages use #body inside our portal.
-            // Workspace pages show V10xWorkspace and hide the portal.
+            
             if (this.is_workspace) {
-                // When on workspace, we might still need to hide original page elements
                 $('.layout-main-section').hide();
                 $('.page-head').hide();
             } else {
                 $('.layout-main-section').show();
-                $('.page-head').show();
+                $('.page-head').hide(); 
             }
+
+            // Always try to portal actions to unified header
+            this.$nextTick(() => {
+                setTimeout(() => this.portalPageActions(), 100);
+            });
+        },
+        portalPageActions() {
+            // 1. Get Portal containers
+            const $titlePortal = $('#v10x-page-title-portal');
+            const $customPortal = $('#v10x-custom-actions-portal');
+            const $standardPortal = $('#v10x-standard-actions-portal');
+            const $morePortal = $('#v10x-more-actions-portal');
+
+            if (!$titlePortal.length) return;
+
+            // CLEAR PORTALS
+            $titlePortal.empty();
+            $customPortal.empty();
+            $standardPortal.empty();
+            $morePortal.empty();
+
+            // 2. Breadcrumbs
+            const $breadcrumbs = $('#navbar-breadcrumbs');
+            if ($breadcrumbs.length && $breadcrumbs.children().length > 0) {
+                $breadcrumbs.prependTo($titlePortal).show();
+            }
+
+            // 3. Page Elements
+            const $activePage = $('.page-container:visible');
+            if (!$activePage.length) return;
+
+            const $titleArea = $activePage.find('.title-area');
+            const $customActions = $activePage.find('.custom-actions');
+            const $standardActions = $activePage.find('.standard-actions');
+            const $moreButton = $activePage.find('.more-button');
+
+            // Move to portals
+            if ($titleArea.length) $titleArea.appendTo($titlePortal).show();
+            if ($customActions.length) $customActions.appendTo($customPortal).show();
+            if ($standardActions.length) $standardActions.appendTo($standardPortal).show();
+            if ($moreButton.length) $moreButton.appendTo($morePortal).show();
+            
+            // Clean up clashing classes
+            $customActions.removeClass('hide hidden-xs hidden-md');
+            $standardActions.removeClass('hide');
+            $moreButton.removeClass('hide');
         },
         toggleCollapse() {
             this.sidebar_collapsed = !this.sidebar_collapsed;
@@ -157,24 +214,30 @@ export default {
 
 .v10x-main-content {
     margin-left: 240px;
-    margin-top: 70px;
+    margin-top: 0; /* Header is inside or fixed */
     flex: 1;
     overflow-y: auto;
-    transition: margin-left 0.3s ease;
-    background-color: #ffffff;
+    transition: margin-left 0.2s ease-in-out;
+    background-color: var(--bg-color); /* Metronic gray background for content */
     z-index: 1;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Centered container for 100% screen usage */
-.v10x-workspace-view, #v10x-frappe-portal {
-    max-width: 100%;
-    margin: 0 auto;
-    width: 100%;
+#v10x-frappe-portal {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.v10x-content-area {
+    padding: 25px;
+    flex: 1;
 }
 
 body.v10x-sidebar-collapsed .v10x-main-content {
-    margin-left: 5vw;
+    margin-left: 60px;
 }
 
 body.v10x-sidebar-hidden .v10x-main-content {
