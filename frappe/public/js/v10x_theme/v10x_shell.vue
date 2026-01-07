@@ -172,7 +172,6 @@ export default {
                 const $titlePortal = $('#v10x-title-text-portal');
                 const $customPortal = $('#v10x-custom-actions-portal');
                 const $standardPortal = $('#v10x-standard-actions-portal');
-                const $morePortal = $('#v10x-more-actions-portal');
 
                 if (!$titlePortal.length) return;
 
@@ -185,7 +184,6 @@ export default {
                     $titlePortal.empty();
                     $customPortal.empty();
                     $standardPortal.empty();
-                    $morePortal.empty();
                     return;
                 }
                 
@@ -195,7 +193,6 @@ export default {
                 const $titleArea = $sourceHeader.find('.title-area');
                 const $customActions = $sourceHeader.find('.custom-actions');
                 const $standardActions = $sourceHeader.find('.standard-actions');
-                const $moreButton = $sourceHeader.find('.more-button');
 
                 // 3. Update Title Portal (Breadcrumbs + Title)
                 // If we found a NEW title area, we should move it.
@@ -215,7 +212,6 @@ export default {
                 moveIfNew($titlePortal, $titleArea, "Title");
                 moveIfNew($customPortal, $customActions, "Custom Actions");
                 moveIfNew($standardPortal, $standardActions, "Standard Actions");
-                moveIfNew($morePortal, $moreButton, "More Menu");
 
                 // Ensure visibility of internal buttons which Frappe often hides
                 $standardActions.find('.btn').removeClass('hide');

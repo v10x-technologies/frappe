@@ -12,7 +12,6 @@
           
           <div class="page-actions-area d-flex align-items-center gap-2">
               <div id="v10x-custom-actions-portal" class="d-flex align-items-center gap-2"></div>
-              <div id="v10x-more-actions-portal" class="d-flex align-items-center"></div>
               <div id="v10x-standard-actions-portal" class="d-flex align-items-center gap-2"></div>
           </div>
         </div>

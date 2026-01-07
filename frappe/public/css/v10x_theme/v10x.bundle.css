@@ -190,8 +190,7 @@ header.navbar {
 #v10x-breadcrumbs-portal #navbar-breadcrumbs,
 #v10x-title-text-portal .title-area,
 #v10x-standard-actions-portal .standard-actions,
-#v10x-custom-actions-portal .custom-actions,
-#v10x-more-actions-portal .more-button {
+#v10x-custom-actions-portal .custom-actions {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
