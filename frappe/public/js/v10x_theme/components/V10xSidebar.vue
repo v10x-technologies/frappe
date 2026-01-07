@@ -279,7 +279,7 @@ export default {
     background-color: var(--bg-color); /* Metronic light gray background */
     width: 240px;
     position: fixed;
-    top: 0; /* Sidebar spans full height in most modern designs */
+    top: 70px; /* Sidebar starts below the top header */
     bottom: 0;
     left: 0;
     z-index: 1001; 

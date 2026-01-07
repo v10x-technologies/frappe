@@ -214,7 +214,7 @@ export default {
 
 .v10x-main-content {
     margin-left: 240px;
-    margin-top: 0; /* Header is inside or fixed */
+    margin-top: 70px; /* Matches fixed header height */
     flex: 1;
     overflow-y: auto;
     transition: margin-left 0.2s ease-in-out;
