@@ -121,10 +121,60 @@ header.navbar {
     }
 }
 
-/* SUBMENU & EDIT STYLES */
-.sidebar-menu ul ul {
-    background-color: #f7f9fc;
-    padding: 0;
+/* 6. MODAL & DIALOG REFINEMENT */
+.modal-dialog {
+    margin: 1.75rem auto;
+}
+
+.modal-content {
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 0 50px 0 rgba(82, 63, 105, 0.15) !important;
+    overflow: hidden;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: 1.25rem 1.5rem !important;
+    background-color: #fff !important;
+}
+
+.modal-title {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: var(--heading-color) !important;
+}
+
+.modal-body {
+    padding: 1.5rem !important;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border-color) !important;
+    padding: 1rem 1.5rem !important;
+    background-color: #f9f9f9 !important;
+}
+
+/* Child Table / Grid Edit Style */
+.grid-row-open {
+    background-color: #fff !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 0 40px rgba(0,0,0,0.1) !important;
+    margin: 20px 0 !important;
+    padding: 20px !important;
+    z-index: 1060 !important;
+}
+
+/* Ensure backdrop and freeze are correctly layered above our header/sidebar */
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+.freeze {
+    background-color: rgba(0,0,0,0.3) !important;
+    z-index: 1060 !important;
+    opacity: 1 !important;
 }
 
 .sidebar-menu ul ul li a {

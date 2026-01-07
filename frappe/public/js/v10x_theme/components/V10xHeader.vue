@@ -197,11 +197,58 @@ export default {
     top: 0;
     right: 0;
     left: 0;
-    z-index: 3000;
+    z-index: 1000; /* Lower than modals (1050+) */
     display: flex;
     align-items: center;
     padding: 0 25px;
     box-shadow: 0 0 20px rgba(0,0,0,0.03);
+}
+
+/* 6. MODAL & DIALOG REFINEMENT */
+.modal-content {
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 0 50px 0 rgba(82, 63, 105, 0.15) !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: 20px 25px !important;
+}
+
+.modal-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: var(--heading-color) !important;
+}
+
+.modal-body {
+    padding: 25px !important;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border-color) !important;
+    padding: 15px 25px !important;
+}
+
+/* Child Table / Grid Edit Style */
+.grid-row-open {
+    background-color: #fff !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 0 40px rgba(0,0,0,0.1) !important;
+    margin-top: 15px !important;
+    margin-bottom: 15px !important;
+    z-index: 1060 !important;
+}
+
+/* Ensure backdrop and freeze are correctly layered */
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+.freeze {
+    z-index: 1060 !important;
 }
 
 .header-left .logo {

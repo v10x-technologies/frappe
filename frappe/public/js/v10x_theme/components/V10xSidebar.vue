@@ -282,7 +282,7 @@ export default {
     top: 70px; /* Sidebar starts below the top header */
     bottom: 0;
     left: 0;
-    z-index: 1001; 
+    z-index: 999; /* Below header (1000) and modals (1050+) */
     border-right: 1px solid var(--border-color);
     transition: all 0.2s ease-in-out;
     display: flex;
