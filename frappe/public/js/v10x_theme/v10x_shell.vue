@@ -23,6 +23,8 @@
         :isOpen="showSecondarySidebar"
         :workspaceName="workspace_name"
         :menuItems="menuItems"
+        :sidebarCollapsed="sidebar_collapsed"
+        :currentRoute="current_route"
         @close="showSecondarySidebar = false"
     />
 

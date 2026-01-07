@@ -1,6 +1,9 @@
 <template>
     <transition name="slide-left">
-        <div v-if="isOpen" class="v10x-secondary-sidebar" @click.self="closeSidebar">
+        <div v-if="isOpen" 
+             class="v10x-secondary-sidebar" 
+             :class="{ 'is-collapsed': sidebarCollapsed }"
+             @click.self="closeSidebar">
             <div class="secondary-sidebar-content">
                 <div class="sidebar-header">
                     <h5>Quick Links</h5>
@@ -46,9 +49,17 @@ export default {
             type: String,
             default: ''
         },
+        sidebarCollapsed: {
+            type: Boolean,
+            default: false
+        },
         menuItems: {
             type: Array,
             default: () => []
+        },
+        currentRoute: {
+            type: String,
+            default: ''
         }
     },
     methods: {
@@ -93,13 +104,9 @@ export default {
     transition: left 0.2s ease-in-out; /* Sync with primary sidebar toggle */
 }
 
-/* Dynamic left position based on sidebar state - handled via prop or class in parent? 
-   Actually, let's make it a direct child of the shell and manage 'left' there or here via prop.
-   For now, we'll assume the shell handles the class on body or we pass a prop.
-   Let's check the shell. It adds 'v10x-sidebar-collapsed' to body.
-*/
+/* Dynamic left position based on sidebar state */
 
-:global(body.v10x-sidebar-collapsed) .v10x-secondary-sidebar {
+.v10x-secondary-sidebar.is-collapsed {
     left: 60px;
 }
 
