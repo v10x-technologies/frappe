@@ -86,7 +86,8 @@ export default {
             showSecondarySidebar: false,
             menuItems: [],
             activeWorkspaceName: '',
-            workspaceCache: {}
+            workspaceCache: {},
+            pending_route_update: false
         }
     },
     watch: {
@@ -146,6 +147,23 @@ export default {
         frappe.router.on('change', () => {
             this.current_route = frappe.get_route_str();
             this.handlePortalVisibility();
+            
+            // 1. Clear old content immediately to avoid stale state
+            this.clearPortals();
+            this.pending_route_update = true; // Signal observer to be fast
+            
+            // 2. Poll for the new page content (try multiple times as rendering can be async)
+            let attempts = 0;
+            const trySync = () => {
+                this.portalPageActions();
+                attempts++;
+                // Retry every 50ms up to 20 times (1s total) - Safety net
+                if (attempts < 20 && this.pending_route_update) {
+                    setTimeout(trySync, 50);
+                }
+            };
+            trySync();
+            
             // On direct page load, check if we need to show secondary sidebar
             this.checkSecondarySidebarOnLoad();
         });
@@ -251,10 +269,17 @@ export default {
             // Debounce the observer callback to reduce lag
             let timeout;
             this.observer = new MutationObserver((mutations) => {
-                if (timeout) clearTimeout(timeout);
-                timeout = setTimeout(() => {
+                // If we are waiting for a route update (navigation), update INSTANTLY
+                if (this.pending_route_update) {
+                    if (timeout) clearTimeout(timeout);
                     this.portalPageActions();
-                }, 100); // 100ms debounce
+                } else {
+                    // Otherwise debounce standard background DOM changes to save CPU
+                    if (timeout) clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        this.portalPageActions();
+                    }, 100); 
+                }
             });
 
             this.observer.observe(target, { 
@@ -272,14 +297,19 @@ export default {
                 this.observer = null;
             }
         },
+        clearPortals() {
+            $('#v10x-breadcrumbs-portal').empty();
+            $('#v10x-title-text-portal').empty();
+            $('#v10x-custom-actions-portal').empty();
+            $('#v10x-standard-actions-portal').empty();
+        },
         portalPageActions() {
             if (this.is_portaling) return;
             this.is_portaling = true;
 
-            // Use requestAnimationFrame for smoother UI updates
             requestAnimationFrame(() => {
                 try {
-                    // ... existing portal logic ...
+                    // 1. Get Portal containers
                     const $bcPortal = $('#v10x-breadcrumbs-portal');
                     const $titlePortal = $('#v10x-title-text-portal');
                     const $customPortal = $('#v10x-custom-actions-portal');
@@ -290,25 +320,38 @@ export default {
                         return;
                     }
 
-                    const $bcSource = $('#navbar-breadcrumbs');
-                    const $activePage = $('.page-container:visible');
+                    // 2. Identify ACTIVE source elements
+                    // Priority 1: Match exact data-page-route
+                    let route = frappe.get_route_str();
+                    let $activePage = $(`.page-container[data-page-route="${route}"]`);
+                    
+                    // Priority 2: Fallback to any visible page container (excluding hidden ones)
+                    if (!$activePage.length || $activePage.hasClass('hide') || $activePage.css('display') === 'none') {
+                         $activePage = $('.page-container:not(.hide):visible');
+                    }
                     
                     if (!$activePage.length) {
-                        $bcPortal.empty();
-                        $titlePortal.empty();
-                        $customPortal.empty();
-                        $standardPortal.empty();
+                        // If still no page found, we might be in transition. 
+                        // Keep portals empty (or previous content if we didn't clear outside)
                         this.is_portaling = false;
-                        return;
+                        return; 
                     }
 
+                    // Found the active page! Success.
+                    this.pending_route_update = false; 
+                    
+                    const $bcSource = $('#navbar-breadcrumbs');
                     const $sourceHeader = $activePage.find('.page-head');
+                    
                     const $titleArea = $sourceHeader.find('.title-area');
                     const $customActions = $sourceHeader.find('.custom-actions');
                     const $standardActions = $sourceHeader.find('.standard-actions');
 
                     const moveIfNew = ($portal, $source) => {
                         if ($source.length) {
+                            // Check if the source is already inside the portal (avoid redundant appends)
+                            // But also check if it's the *same* source element we found in the new page
+                            // Since we grab $source from $activePage, it is the correct instance.
                             if (!$source.closest($portal).length) {
                                 $portal.empty(); 
                                 $source.appendTo($portal).show();
